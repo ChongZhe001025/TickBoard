@@ -19,6 +19,7 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: pass
       ME_CONFIG_BASICAUTH_USERNAME: root
       ME_CONFIG_BASICAUTH_PASSWORD: pass
+      ME_CONFIG_SITE_BASEURL: /mongo-express
     depends_on:
       - mongo
 
