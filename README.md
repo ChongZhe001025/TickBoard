@@ -42,7 +42,7 @@ To get started with the project, follow these steps:
    - Build and run the Docker container:
      ```
      docker build -t gin-api .
-     docker run -p 8080:8080 gin-api
+  docker run -p 8080:8080 gin-api
      ```
 
 3. Set up the frontend:
@@ -54,7 +54,40 @@ To get started with the project, follow these steps:
      ```
    - Start the development server:
      ```
-     npm start
+    npm start
+
+## Deploy to EC2 with HTTPS (Expose only Frontend & Mongo-Express)
+
+Production architecture: Nginx terminates TLS on EC2 and reverse-proxies to local containers. Only the following are exposed via Nginx:
+
+- `/` → frontend (127.0.0.1:3000)
+- `/api/` → gin-api (127.0.0.1:8082)
+- `/db/` → mongo-express (127.0.0.1:8081)
+
+Docker services bind to 127.0.0.1 using `docker-compose.prod.yml` so they are not directly exposed to the internet.
+
+### Steps
+
+1. DNS: point `tasktrek.czhuang.dev` to the EC2 public IP. Ensure Security Group allows 80/443.
+2. Start containers on EC2:
+  ```
+  sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+  ```
+3. Nginx:
+  - Copy `nginx/tickboard.conf` to `/etc/nginx/conf.d/tickboard.conf`
+  - `sudo nginx -t && sudo systemctl reload nginx`
+4. TLS certificate (Let’s Encrypt):
+  ```
+  sudo certbot --nginx -d tasktrek.czhuang.dev --agree-tos -m you@example.com
+  ```
+5. Frontend env (build-time): ensure `frontend/.env.production` includes
+  ```
+  REACT_APP_GIN_API_BASE=https://tasktrek.czhuang.dev
+  ```
+6. Validate:
+  - `https://tasktrek.czhuang.dev/` loads UI
+  - `https://tasktrek.czhuang.dev/api/health` returns `{ ok: true }`
+  - `https://tasktrek.czhuang.dev/db/` opens mongo-express
      ```
 
 ## Contributing
