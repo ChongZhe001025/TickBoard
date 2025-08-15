@@ -19,6 +19,7 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: pass
       ME_CONFIG_BASICAUTH_USERNAME: root
       ME_CONFIG_BASICAUTH_PASSWORD: pass
+      ME_CONFIG_SITE_BASEURL: /db
     depends_on:
       - mongo
 
@@ -38,11 +39,10 @@ services:
     depends_on:
       - gin-api
 
-
 volumes:
   mongo-data:
 
-
+# local development
 # services:
 #   mongo:
 #     image: mongo:6
@@ -66,6 +66,7 @@ volumes:
 #       ME_CONFIG_MONGODB_ADMINPASSWORD: pass
 #       ME_CONFIG_BASICAUTH_USERNAME: root
 #       ME_CONFIG_BASICAUTH_PASSWORD: pass
+#   ME_CONFIG_SITE_BASEURL: /db
 #     depends_on:
 #       - mongo
 
