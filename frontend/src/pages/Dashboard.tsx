@@ -31,7 +31,7 @@ export default function Dashboard(){
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(120deg, #232526 0%, #414345 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Orbitron, Roboto Mono, Segoe UI, Arial, sans-serif' }}>
       <div style={{ width: 500, background: '#222', borderRadius: 20, boxShadow: '0 4px 32px rgba(0,0,0,0.25)', padding: '40px 36px', display: 'flex', flexDirection: 'column', gap: 18, border: '1px solid #444', position: 'relative' }}>
-        <h1 style={{ textAlign: 'center', color: '#fff', marginBottom: 0, letterSpacing: 4, fontWeight: 900, fontSize: 38, fontFamily: 'Orbitron, Roboto Mono, Segoe UI, Arial, sans-serif', textShadow: '0 2px 8px #111' }}>Task Trek</h1>
+        <h1 style={{ textAlign: 'center', color: '#fff', marginBottom: 0, letterSpacing: 4, fontWeight: 900, fontSize: 38, fontFamily: 'Orbitron, Roboto Mono, Segoe UI, Arial, sans-serif', textShadow: '0 2px 8px #111' }}>Tick Board</h1>
         <button onClick={logout} style={{ position: 'absolute', top: 32, right: 36, background: 'none', border: 'none', color: '#bbb', fontWeight: 700, fontSize: 16, cursor: 'pointer', textDecoration: 'underline' }}>Log out</button>
         <h2 style={{ textAlign: 'center', color: '#bbb', marginBottom: 8, letterSpacing: 2, fontWeight: 700, fontSize: 24, fontFamily: 'Orbitron, Roboto Mono, Segoe UI, Arial, sans-serif' }}>Dashboard</h2>
   {/* 自動取得 userId，不需手動輸入 */}

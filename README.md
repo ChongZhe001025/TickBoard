@@ -1,245 +1,158 @@
-# TaskTrek
+# Tick Board
 
-TaskTrek is a project that consists of a backend API built with Go and a frontend application built with React. This project aims to provide a task management system where users can manage their tasks efficiently.
+A small task board project built with React (frontend), Gin (Go backend), and MongoDB. Everything runs in Docker. The API ships with Swagger, and production can be fronted by Nginx with HTTPS.
 
-## Project Structure
+This guide covers:
+- Local Development
+- HTTPS Production
 
-The project is organized into two main directories:
 
-- **gin-api**: This directory contains the backend API built using the Gin framework in Go.
-  - **.env**: Environment variables configuration file for the backend.
-  - **Dockerfile**: Dockerfile for building the backend application.
-  - **go.mod**: Go module file defining the project's dependencies.
-  - **go.sum**: Go module checksum file for dependency consistency.
-  - **main.go**: Entry point for the application, starting the Gin server and setting up routes.
-  - **controllers/**: Contains controllers for handling various requests.
-  - **docs/**: Contains API documentation files.
-  - **internal/**: Contains internal logic for database interactions and security.
-  - **models/**: Contains data models and request models.
+## Architecture & Components
 
-- **frontend**: This directory contains the frontend application built with React.
-  - **.env**: Environment variables configuration file for the frontend.
-  - **Dockerfile**: Dockerfile for building the frontend application.
-  - **package.json**: npm configuration file listing project dependencies and scripts.
-  - **README.md**: Documentation for the frontend application.
-  - **tsconfig.json**: TypeScript configuration file.
-  - **public/**: Contains static files for the frontend application.
-  - **src/**: Contains the source code for the frontend application, including components, pages, and styles.
+- Frontend: React, built and served by `serve` on port 3000
+- API: Gin (default 8082) exposing `/api/*` routes and `/swagger`
+- DB: MongoDB 6 (internal network)
+- Mongo Express: Web GUI for Mongo (exposed as `/db/` or 8081)
+- Nginx (prod only):
+  - `/` → Frontend (127.0.0.1:3000)
+  - `/api/` → Gin API (127.0.0.1:8082)
+  - `/db/` → Mongo Express (127.0.0.1:8081)
 
-## Getting Started
+Relevant files:
+- `docker-compose.yml`: defines the four services and ports
+- `frontend/Dockerfile`: builds React and serves at 3000
+- `gin-api/Dockerfile`: builds Gin API listening on 8082
+- `nginx/tickboard.conf`: production Nginx + Let’s Encrypt example, server_name demo: `tickboard.czhuang.dev`
 
-To get started with the project, follow these steps:
 
-1. Clone the repository:
-   ```
-   git clone <repository-url>
-   cd tasktrek
-   ```
+## Environment Variables
 
-2. Set up the backend:
-   - Navigate to the `gin-api` directory.
-   - Create a `.env` file with the necessary environment variables.
-   - Build and run the Docker container:
-     ```
-     docker build -t gin-api .
-  docker run -p 8080:8080 gin-api
-     ```
+Backend (`gin-api/.env`, auto-loaded by Docker Compose):
 
-3. Set up the frontend:
-   - Navigate to the `frontend` directory.
-   - Create a `.env` file with the necessary environment variables.
-   - Install dependencies:
-     ```
-     npm install
-     ```
-   - Start the development server:
-     ```
-    npm start
+```
+PORT=8082
+MONGO_URI=mongodb://root:pass@mongo:27017
+DB_NAME=TickBoard
+JWT_SECRET=supersecret_change_me
+```
 
-## Deploy to EC2 with HTTPS (Expose only Frontend & Mongo-Express)
+Frontend (`frontend/.env`):
 
-Production architecture: Nginx terminates TLS on EC2 and reverse-proxies to local containers. Only the following are exposed via Nginx:
+```
+REACT_APP_GIN_API_BASE=/
 
-- `/` → frontend (127.0.0.1:3000)
-- `/api/` → gin-api (127.0.0.1:8082)
-- `/db/` → mongo-express (127.0.0.1:8081)
+# Local development (if not using Nginx reverse proxy; call API directly)
+# REACT_APP_GIN_API_BASE=http://localhost:8082
+```
 
-Docker services bind to 127.0.0.1 using `docker-compose.prod.yml` so they are not directly exposed to the internet.
+Notes:
+- In production, Nginx proxies `/api` to the backend. Keeping `REACT_APP_GIN_API_BASE=/` lets the frontend call `/api/...` relatively.
+- For local dev without Nginx, set `REACT_APP_GIN_API_BASE=http://localhost:8082` to hit the API directly.
 
-### Steps
 
-1. DNS: point `tasktrek.czhuang.dev` to the EC2 public IP. Ensure Security Group allows 80/443.
-2. Start containers on EC2:
-  ```
-  sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-  ```
-3. Nginx:
-  - Copy `nginx/tickboard.conf` to `/etc/nginx/conf.d/tickboard.conf`
-  - `sudo nginx -t && sudo systemctl reload nginx`
-4. TLS certificate (Let’s Encrypt):
-  ```
-  sudo certbot --nginx -d tasktrek.czhuang.dev --agree-tos -m you@example.com
-  ```
-5. Frontend env (build-time): ensure `frontend/.env.production` includes
-  ```
-  REACT_APP_GIN_API_BASE=https://tasktrek.czhuang.dev
-  # TickBoard
+## Local Development
 
-  全端任務管理應用：
-  - 後端：Go Gin（JWT 登入、任務 CRUD、使用者 CRUD、Dashboard 聚合、Swagger）
-  - 前端：React + CRA（以 Axios 串接 API，支援 Cookie 驗證）
-  - 資料庫：MongoDB + mongo-express（管理介面）
-  - 佈署：Docker Compose + Nginx 反向代理（HTTPS via Let’s Encrypt）
+Prerequisites:
+- Docker Desktop (with Docker Compose)
 
-  ## 功能總覽
-  - 帳號註冊/登入/登出（JWT，HttpOnly Cookie）
-  - 使用者查詢/更新/刪除（/api/users/:id）
-  - 任務新增/查詢/更新/刪除（/api/tasks）
-  - Dashboard 聚合（/api/dashboard）與使用者資訊（/api/me）
-  - 健康檢查（/api/health）
-  - Swagger 文件（/api/swagger/index.html）
+Steps:
+1) Point the frontend to the local API when not using Nginx:
+  - Edit `frontend/.env` and use: `REACT_APP_GIN_API_BASE=http://localhost:8082`
+2) Bring everything up (Windows PowerShell):
 
-  ## 專案結構
+```powershell
+docker compose up -d --build
+```
 
-  ```
-  docker-compose.yml
-  nginx/
-    tickboard.conf        # Nginx 反代 + TLS 設定
-  frontend/
-    Dockerfile
-    .env                  # 前端環境變數（開發）
-    .env.production       # 前端環境變數（正式，若使用）
-    src/
-      lib/api.ts          # Axios 客戶端（withCredentials）
-  gin-api/
-    Dockerfile
-    .env                  # 後端環境變數（PORT/MONGO_URI/JWT_SECRET）
-    main.go               # 路由註冊，含 / 與 /api 前綴兩組路徑
-    controllers/          # auth、users、task 控制器
-    internal/             # db 連線、JWT、CORS 等
-    docs/                 # Swagger 文件
-  ```
+3) Services:
+- Frontend: http://localhost:3000
+- API Health: http://localhost:8082/health
+- Swagger UI: http://localhost:8082/swagger/index.html
+- Mongo Express: http://localhost:8081/db  (BasicAuth: `root` / `pass`)
 
-  ## 環境變數
+4) Handy commands:
 
-  - `gin-api/.env`
-    ```
-    PORT=8082
-    MONGO_URI=mongodb://root:pass@mongo:27017
-    DB_NAME=TickBoard
-    JWT_SECRET=<請改為隨機長字串>
-    ```
-    - 正式環境建議同時提供 `NODE_ENV=production`（影響 Cookie Secure 屬性）。
+```powershell
+# Tail logs
+docker compose logs -f
 
-  - `frontend/.env`（本地與容器開發）
-    ```
-    REACT_APP_GIN_API_BASE=/
-    ```
-    - 使用相對路徑，讓 CRA dev server 代理 `/api` 到後端容器。
+# Stop and remove (optionally with volumes)
+docker compose down
+# Also remove Mongo data volume:
+docker compose down -v
+```
 
-  - `frontend/.env.production`（正式可選）
-    ```
-    REACT_APP_GIN_API_BASE=https://<你的網域>
-    ```
+Notes: The `frontend/Dockerfile` runs a production build served by `serve`. If you prefer hot-reload dev flow (CRA dev server), switch to the commented "local development" section inside that Dockerfile and apply the corresponding example in `docker-compose.yml` (a commented local dev section is provided for reference).
 
-  安全注意：JWT_SECRET 只放在後端，切勿放在前端或提交到版本庫。
 
-  ## 本機快速啟動（Docker Compose）
+## HTTPS Production
 
-  1. 準備 `.env`：請確認 `gin-api/.env` 與 `frontend/.env` 已就緒。
-  2. 啟動：
-     ```bash
-     docker-compose up -d --build
-     ```
-  3. 存取：
-     - 前端：http://localhost:3000
-     - 後端健康檢查（透過 dev server 代理）：http://localhost:3000/api/health
-     - 或直接打後端：http://localhost:8082/api/health
-     - mongo-express：http://localhost:8081
+Example below uses Ubuntu; adjust for your distro as needed.
 
-  說明：
-  - Compose 讓各容器在同一網路，後端用 `mongo:27017` 連 Mongo，無需對外開 27017。
-  - 前端以 CRA proxy 將 `/api` 代理到後端容器，`REACT_APP_GIN_API_BASE=/` 即可。
+1) DNS:
+  - Point your domain (e.g., `tickboard.czhuang.dev`) A record to your server’s IP.
 
-  ## 正式佈署（EC2 + Nginx + HTTPS）
+2) Start containers on the server:
 
-  架構：Nginx 對外提供 80/443，反向代理到本機容器（僅綁 127.0.0.1）。對外只暴露：
-  - `/` → 前端（127.0.0.1:3000）
-  - `/api/` → Gin API（127.0.0.1:8082）
-  - `/db/` → mongo-express（127.0.0.1:8081）
+```bash
+docker compose up -d --build
+```
 
-  1) DNS 與安全群組
-  - A 記錄指到 EC2 公網 IP。
-  - SG 開放 80/443（及 22/SSH）。
+3) Install and configure Nginx + Let’s Encrypt (Debian/Ubuntu example):
 
-  2) 安裝相依（在 EC2）
-  ```bash
-  sudo apt update
-  sudo apt install -y docker.io docker-compose-plugin nginx certbot python3-certbot-nginx
-  sudo systemctl enable --now docker nginx
-  ```
+```bash
+sudo apt update
+sudo apt install -y nginx certbot python3-certbot-nginx
 
-  3) 啟動容器（在專案根目錄）
-  ```bash
-  sudo docker compose up -d --build
-  ```
+# Place site config (use repo file nginx/tickboard.conf and edit server_name as needed)
+sudo cp nginx/tickboard.conf /etc/nginx/sites-available/tickboard
+sudo ln -s /etc/nginx/sites-available/tickboard /etc/nginx/sites-enabled/tickboard
+sudo nginx -t && sudo systemctl reload nginx
 
-  4) 佈署 Nginx 設定
-  - 將 `nginx/tickboard.conf` 放到 `/etc/nginx/conf.d/tickboard.conf`
-  - 注意 `/api/` 的 `proxy_pass` 不要尾斜線：
-    ```nginx
-    location /api/ {
-        proxy_pass http://127.0.0.1:8082;  # ← 無尾斜線，保留 /api 前綴
-    }
-    ```
-  - 測試並重新載入：
-  ```bash
-  sudo nginx -t && sudo systemctl reload nginx
-  ```
+# Obtain and install cert (interactive)
+sudo certbot --nginx -d tickboard.czhuang.dev
+```
 
-  5) 申請憑證（Let’s Encrypt）
-  ```bash
-  sudo certbot --nginx -d <你的網域> --agree-tos -m <你的Email>
-  ```
+If you manage certs manually, ensure the paths in Nginx point to:
 
-  6) 驗證
-  - https://<你的網域>/ 應能開啟前端
-  - https://<你的網域>/api/health 應回 `{"ok": true}`
-  - https://<你的網域>/db/ 可開啟 mongo-express
+```
+/etc/letsencrypt/live/<your-domain>/fullchain.pem
+/etc/letsencrypt/live/<your-domain>/privkey.pem
+```
 
-  Cookie 與 CORS：
-  - 後端已開啟 AllowCredentials；在正式環境請設 `NODE_ENV=production` 以啟用 Secure Cookie。
+4) Routes:
+- https://your-domain/ → Frontend (:3000)
+- https://your-domain/api/ → API (:8082)
+- https://your-domain/db/ → Mongo Express (:8081; `/db` auto-redirects to `/db/`)
 
-  ## API 一覽（節選）
-  - Auth：
-    - POST `/api/auth/register`
-    - POST `/api/auth/login`
-    - POST `/api/auth/logout`
-    - GET  `/api/me`
-  - Tasks：
-    - GET `/api/tasks`
-    - POST `/api/tasks`
-    - GET `/api/tasks/:id`
-    - PATCH `/api/tasks/:id`
-    - DELETE `/api/tasks/:id`
-  - Users：
-    - GET `/api/users/:id`
-    - PATCH `/api/users/:id`
-    - DELETE `/api/users/:id`
-  - 雜項：
-    - GET `/api/health`
-    - Swagger：`/api/swagger/index.html`
+5) Quick checks:
+- Test Nginx: `sudo nginx -t && sudo systemctl reload nginx`
+- API health: `curl -I https://your-domain/api/health`
+- Swagger: `https://your-domain/api/swagger/index.html`
 
-  ## 疑難排解
-  - 前端打不到 API：
-    - 檢查 Nginx `/api/` 的 `proxy_pass` 是否無尾斜線。
-    - 前端 `.env` 是否為 `REACT_APP_GIN_API_BASE=/` 並已重啟容器。
-  - 502/Bad Gateway：
-    - 後端容器是否啟動；`curl http://127.0.0.1:8082/api/health` 是否 200。
-  - Mongo 無法連線：
-    - `MONGO_URI` 是否用 `mongo:27017`；無需對外開 27017。
-  - 需要外部連 Mongo：
-    - 建議用 SSH Tunnel；不建議對外開埠。
 
-  ## 授權
-  MIT
+## Dev Notes
+
+- API uses JWT (secret: `JWT_SECRET`). Tokens are read from Authorization: Bearer or cookie.
+- CORS allows credentials; frontend Axios is configured with `withCredentials: true`.
+
+
+## Directory Overview
+
+- `docker-compose.yml`: spin up Mongo, Mongo Express, Gin API, and Frontend
+- `frontend/`: React app (`src/`), build/runtime `Dockerfile`
+- `gin-api/`: Go Gin API (`controllers/`, `models/`, `internal/`, `docs/`)
+- `nginx/tickboard.conf`: production reverse proxy + HTTPS example
+
+
+## Common Local URLs
+
+- Frontend: http://localhost:3000
+- API health: http://localhost:8082/health
+- Swagger: http://localhost:8082/swagger/index.html
+- Mongo Express: http://localhost:8081/db (BasicAuth: `root` / `pass`)
+
+
+---
+
+If you want, we can add a sample local Nginx reverse-proxy setup (with self-signed cert) and/or a docker-compose profile for CRA hot-reload development.

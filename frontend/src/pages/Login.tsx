@@ -37,7 +37,7 @@ export default function Login(){
         border: '1px solid #444',
         marginTop: 60
       }}>
-        <h2 style={{ textAlign: 'center', marginBottom: 18, color: '#fff', letterSpacing: 4, fontWeight: 900, fontSize: 32, fontFamily: 'Orbitron, Roboto Mono, Segoe UI, Arial, sans-serif', textShadow: '0 2px 8px #111' }}>Task Trek</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: 18, color: '#fff', letterSpacing: 4, fontWeight: 900, fontSize: 32, fontFamily: 'Orbitron, Roboto Mono, Segoe UI, Arial, sans-serif', textShadow: '0 2px 8px #111' }}>Tick Board</h2>
         {loginError && <p style={{ color: '#ff3b3b', fontSize: 15, margin: 0, textAlign: 'center', fontWeight: 700 }}>{loginError}</p>}
         <label style={{ fontWeight: 600, marginBottom: 4, color: '#bbb', fontFamily: 'Roboto Mono, Orbitron, Segoe UI, Arial, sans-serif' }}>Email</label>
         <input 

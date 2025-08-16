@@ -54,7 +54,7 @@ export default function TaskEdit(){
         gap: 18,
         border: '1px solid #444'
       }}>
-        <h1 style={{ textAlign: 'center', color: '#fff', marginBottom: 0, letterSpacing: 4, fontWeight: 900, fontSize: 38, fontFamily: 'Orbitron, Roboto Mono, Segoe UI, Arial, sans-serif', textShadow: '0 2px 8px #111' }}>Task Trek</h1>
+        <h1 style={{ textAlign: 'center', color: '#fff', marginBottom: 0, letterSpacing: 4, fontWeight: 900, fontSize: 38, fontFamily: 'Orbitron, Roboto Mono, Segoe UI, Arial, sans-serif', textShadow: '0 2px 8px #111' }}>Tick Board</h1>
   <h2 style={{ textAlign: 'center', color: '#bbb', marginBottom: 8, letterSpacing: 2, fontWeight: 700, fontSize: 24, fontFamily: 'Orbitron, Roboto Mono, Segoe UI, Arial, sans-serif' }}>Modify Task</h2>
         <label style={{ fontWeight: 600, marginBottom: 4, color: '#bbb', fontFamily: 'Roboto Mono, Orbitron, Segoe UI, Arial, sans-serif' }}>Title</label>
         <input 
